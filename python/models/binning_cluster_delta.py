@@ -128,7 +128,7 @@ class BinningClusteringDelta(SparseConvClusteringBase):
         y = tf.layers.conv3d(y, 32, [1, 1, 4], activation=tf.nn.relu, padding='same')  # 4x4x12x32
         y = tf.layers.max_pooling3d(y, (1, 1, 3), (1,1,3))  # 4x4x4x32
         y = tf.layers.conv3d(y, 16, [2, 2, 1], activation=tf.nn.relu, padding='same')  # 4x4x4x32
-        y = tf.layers.max_pooling3d(y, (2, 2, 1), (2,2,1))  # 2x2x4x16≈
+        y = tf.layers.max_pooling3d(y, (2, 2, 1), (2,2,1))  # 2x2x4x16
         y = tf.layers.conv3d_transpose(y, 16, [2, 2, 1], [2,2,1], activation=tf.nn.relu, padding='same')  # 4x4x4x16
         y = tf.layers.conv3d_transpose(y, 16, [1, 1, 2], [1,1,2], activation=tf.nn.relu, padding='same')  # 4x4x8x16
         y = tf.layers.conv3d_transpose(y, 16, [2, 2, 1], [2,2,1], activation=tf.nn.relu, padding='same')  # 8x8x8x16
