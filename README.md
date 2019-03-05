@@ -1,5 +1,5 @@
 DeepHGCal 
-==================
+=========
 
 Based on the DeepJetCore framework (https://github.com/DL4Jets/DeepJetCore) [CMS-AN-17-126] for HGCal reconstruction purposes.
 
@@ -9,6 +9,21 @@ The framework consists of two parts:
    
 The DeepJetCore framework and the DeepHGCal framework should be checked out to the same parent directory.
 Before usage, always set up the environment by sourcing XXX_env.sh
+
+## Installation
+
+```
+git clone git@github.com:DL4Jets/DeepJetCore.git
+git clone git@github.com:jkiesele/DeepHGCal.git
+cd DeepHGCal
+conda env create -f deephgcal.yml
+source lxplus_env.sh
+```
+
+* You will need the correct version of `tensorflow`, `tensorflow-gpu`(1.8.0) and `cudnn` in order to run on the CMG GPU.
+```
+conda install -c anaconda cudnn=7.1.2  # also installs cudatoolkit=9.0
+```
 
 
 ## Usage
@@ -41,3 +56,15 @@ python bin/plot/plot_file.py path/to/config.ini config_name
 For clustering, the plot_file can be `plot_inference_clustering.py`
 
 It will plot the resolution histogram as well as output mean and variance of resolution on stdout.
+
+
+### Issues
+
+1. Tensorflow and CUDA compatibility issue: Check thread on [Tensorflow's Github Issues](https://github.com/tensorflow/tensorflow/issues/15604) for your specific version of `libcublas.so`
+
+2. `No module named <module_name>`: This means you have not initialized the `$PYTHONPATH`, `$LD_PRELOAD` or `$PATH` and the script cannot find the modules you want to import.
+(Note that `DeepHGCal/python` must be placed on the `$PYTHONPATH` for the internal modules to be found)
+
+3. `KeyError`: Ensure that you are using the correct configuration file with the model of your choice and it has all the necessary keys initialized.
+
+4. `PermissionError: [Errno 1] Operation not permitted`: This is most likely a file-writing error and is expected for an off-the-shelf run of the model training. Modify the config to point to your own output directory where you do have write permission. 
