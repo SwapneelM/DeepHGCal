@@ -1,5 +1,5 @@
 
-name: deephgcalenv
+name: deepjetLinux3
 channels:
 - nlesc
 - defaults

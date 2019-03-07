@@ -56,13 +56,12 @@ class SparseConvClusteringTrainer:
         else:
             self.plot_after = -1
 
-
-
         self.spatial_features_indices = tuple([int(x) for x in (self.config['input_spatial_features_indices']).split(',')])
         self.spatial_features_local_indices = tuple([int(x) for x in (self.config['input_spatial_features_local_indices']).split(',')])
         self.other_features_indices = tuple([int(x) for x in (self.config['input_other_features_indices']).split(',')])
         self.target_indices = tuple([int(x) for x in (self.config['target_indices']).split(',')])
-        self.reader_type = self.config['reader_type'] if len(self.config['reader_type']) != 0 else "data_and_num_entries_reader"
+        self.reader_type = self.config['reader_type'] if len(self.config['reader_type']) != 0 else \
+            "data_and_num_entries_reader"
 
         self.reader_factory = ReaderFactory()
         self.model = None
@@ -99,8 +98,7 @@ class SparseConvClusteringTrainer:
                 print(e)
 
     def profile(self):
-        raise ("Not implemented error")
-
+        raise("Not implemented error")
 
     def train(self):
         self.initialize()
