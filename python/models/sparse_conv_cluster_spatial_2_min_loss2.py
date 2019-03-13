@@ -743,14 +743,14 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
         feat_list=[]
         self.temp_feat_visualize = []
         for i in range(len(filters)):
-            feat, xxx = sparse_conv_hidden_aggregators(feat,
+            feat = sparse_conv_hidden_aggregators(feat,
                                                   aggregators[i],
                                                   n_filters=filters[i],
                                                   pre_filters=pre_filters[i],
                                                   n_propagate=propagate[i],
                                                   plus_mean=plusmean
                                                   )
-            self.temp_feat_visualize.append(xxx)
+            #self.temp_feat_visualize.append(xxx)
             feat = tf.layers.batch_normalization(feat,training=self.is_train, momentum=self.momentum)
             feat_list.append(feat)
             #feat = tf.layers.dropout(feat, rate=0.0005, training=self.is_train)
