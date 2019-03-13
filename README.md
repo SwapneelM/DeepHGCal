@@ -35,7 +35,17 @@ The experiments are usually conducted in three steps:
 
 ### Training
 
-```
+* When training for the first time, ensure that the `from_scratch` configuration value is set to 1.
+* Check using the `gpustat` command and accordingly set the environment variable `CUDA_VISIBLE_DEVICES` to the available GPU ID.
+* Check out off-the-shelf combinations of training configurations:
+
+| Trainer                               | Path to Config File   | Config Name                   |
+| :------------------------------------:|:---------------------:|:-----------------------------:|
+| bin/train/sparse_conv_clustering      | configs/Jan19cfg.ini  | single_neighbours             |
+| bin/train/sparse_conv_clustering      | configs/Jan19cfg.ini  | hidden_aggregators_plusmean   |
+
+
+``` 
 python bin/train/train_file.py path/to/config.ini config_name
 ```
 
