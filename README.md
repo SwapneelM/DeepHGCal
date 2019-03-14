@@ -13,8 +13,8 @@ Before usage, always set up the environment by sourcing XXX_env.sh
 ## Installation
 
 ```
-git clone git@github.com:DL4Jets/DeepJetCore.git
-git clone git@github.com:jkiesele/DeepHGCal.git
+git clone https://github.com/DL4Jets/DeepJetCore.git
+git clone https://github.com/jkiesele/DeepHGCal.git
 cd DeepHGCal
 conda env create -f deephgcal.yml
 source lxplus_env.sh
