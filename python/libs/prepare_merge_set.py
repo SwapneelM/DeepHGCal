@@ -20,6 +20,7 @@ def load_data_target_center(input_file):
     types = ['float64', 'float64', 'float64', 'float64', 'float64', 'float64', 'float64', 'int32',
              'int32', 'int32', 'int32', 'int32', 'int32', 'int32']
 
+    # Maximum number of elements in the column? But why are the final sizes '1'
     max_size = [3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 1, 1, 1, 1, 1, 1]
 
     data, sizes = sparse_hgcal.read_np_array(file_path, location, branches, types, max_size)
