@@ -39,7 +39,7 @@ class FixNumEntriesReader(DataAndNumEntriesReader):
         dataset = dataset.batch(self.num_batch)
         iterator = dataset.make_one_shot_iterator()
         data = iterator.get_next()
-        num_entries = tf.ones(shape=(self.num_batch, 1) ,dtype=tf.int64) * self.num_max_entries
+        num_entries = tf.ones(shape=(self.num_batch, 1), dtype=tf.int64) * self.num_max_entries
         
         if self.return_seeds:
             return data, num_entries
