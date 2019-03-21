@@ -4,7 +4,7 @@ from models.sparse_conv_clustering_base import SparseConvClusteringBase
 from ops.sparse_conv_2 import *
 from models.switch_model import SwitchModel
 from ops.activations import *
-
+from pdb import set_trace
 
 class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
 
@@ -730,7 +730,7 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
         feat_list=[]
         self.temp_feat_visualize = []
         for i in range(len(filters)):
-            feat = sparse_conv_hidden_aggregators(feat,
+            feat, _ = sparse_conv_hidden_aggregators(feat,
                                                   aggregators[i],
                                                   n_filters=filters[i],
                                                   pre_filters=pre_filters[i],

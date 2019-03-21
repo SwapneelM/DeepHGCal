@@ -15,7 +15,7 @@ import sys
 
 from readers import ReaderFactory
 from inference import InferenceOutputStreamer
-
+from pdb import set_trace
 
 bb=10
 
@@ -214,7 +214,6 @@ class SparseConvClusteringTrainer:
 
             # Wait for threads to stop
             coord.join(threads)
->>>>>>> feat: Sync local branch
 
     def train(self):
         self.initialize()
