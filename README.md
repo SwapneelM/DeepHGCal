@@ -25,6 +25,13 @@ source lxplus_env.sh
 conda install -c anaconda cudnn=7.1.2  # also installs cudatoolkit=9.0
 ```
 
+* You will (probably) need to symlink (`ln -s`) your libstdc++.so.6 from libstdc++.so.6.0.19 to 6.0.25
+```
+unlink $CONDA_PREFIX/lib/libstdc++.so.6
+ln -s $CONDA_PREFIX/lib/libstdc++.so.6.0.25 $CONDA_PREFIX/lib/libstdc++.so.6
+
+```
+
 
 ## Usage
 

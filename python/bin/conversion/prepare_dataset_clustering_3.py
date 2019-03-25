@@ -138,8 +138,8 @@ def run_conversion_simple(input_file, firstrun=False):
     maxenergyids1[totdiff > 0] = maxenergyids2[totdiff > 0]
     maxenergyids2[totdiff > 0] = maxenergyids1_temp[totdiff > 0]
     
-    maxenergyids1=np.expand_dims(maxenergyids1, axis=1)
-    maxenergyids2=np.expand_dims(maxenergyids2, axis=1)
+    maxenergyids1 = np.expand_dims(maxenergyids1, axis=1)
+    maxenergyids2 = np.expand_dims(maxenergyids2, axis=1)
     
     moreinfo = np.concatenate([maxenergyids1, maxenergyids2], axis=-1)
 
@@ -166,8 +166,10 @@ def run_conversion_simple(input_file, firstrun=False):
     if firstrun:
         print('output shape ', allout.shape)
         print('last entry in axis 1 is: [idx seed0, idx seed1, 0, ...]')
-        print('other are: [esum,rechit_x, rechit_y, rechit_z, rechit_vxy, rechit_vz,rechit_layer,fraction1,fraction2]')
-        print('ordering of seed0 and seed1 is done in order by: x,y,z. Events with same positioned seeds are removed')
+        print('other are: [esum,rechit_x, rechit_y, rechit_z, rechit_vxy, '
+              'rechit_vz, rechit_layer, fraction1, fraction2]')
+        print('ordering of seed0 and seed1 is done in order by: '
+              'x,y,z. Events with same positioned seeds are removed')
     
     just_file_name = os.path.splitext(os.path.split(input_file)[1])[0] + '_'
     output_file_prefix = os.path.join(args.output, just_file_name)

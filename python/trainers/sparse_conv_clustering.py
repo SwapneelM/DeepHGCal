@@ -103,7 +103,7 @@ class SparseConvClusteringTrainer:
     def train(self):
         self.initialize()
         print("Beginning to train network with parameters", get_num_parameters(self.model.get_variable_scope()))
-        placeholders = self. model.get_placeholders()
+        placeholders = self.model.get_placeholders()
 
         if self.from_scratch:
             subprocess.call("mkdir -p %s"%(self.summary_path), shell=True)
@@ -133,7 +133,9 @@ class SparseConvClusteringTrainer:
 
         inputs_feed = self.reader_factory.get_class(self.reader_type)(self.training_files, self.num_max_entries, self.num_data_dims, self.num_batch).get_feeds()
         inputs_validation_feed = self.reader_factory.get_class(self.reader_type)(self.validation_files, self.num_max_entries, self.num_data_dims, self.num_batch).get_feeds(shuffle=False)
-
+        print("\n****************************************")
+        print("Feed Input type", type(inputs_feed[0]))
+        print("Feed Input shape: ", inputs_feed[0].get_shape().as_list())
         init = [tf.global_variables_initializer(), tf.local_variables_initializer()]
 
         with tf.Session() as sess:
@@ -155,6 +157,11 @@ class SparseConvClusteringTrainer:
             print("Starting iterations")
             while iteration_number < self.train_for_iterations:
                 inputs_train = sess.run(list(inputs_feed))
+
+                print("\n****************************************")
+                print("Input Train type", type(inputs_train[0]))
+                print("Input Train shape: ", inputs_train[0].shape)
+
                 learning_rate=1
                 if hasattr(self.model, "learningrate_scheduler"):
                     learning_rate = self.model.learningrate_scheduler.get_lr(iteration_number)
@@ -180,7 +187,7 @@ class SparseConvClusteringTrainer:
                         placeholders[2]: inputs_train[0][:, :, self.other_features_indices],
                         placeholders[3]: inputs_train[0][:, :, self.target_indices],
                         placeholders[4]: inputs_train[1],
-                        placeholders[5]: inputs_train[2],
+                        # placeholders[5]: inputs_train[2],
                         self.model.is_train: True,
                         self.model.learning_rate : learning_rate
                     }
@@ -212,7 +219,7 @@ class SparseConvClusteringTrainer:
                             placeholders[2]: inputs_validation[0][:, :, self.other_features_indices],
                             placeholders[3]: inputs_validation[0][:, :, self.target_indices],
                             placeholders[4]: inputs_validation[1],
-                            placeholders[5]: inputs_validation[2],
+                            # placeholders[5]: inputs_validation[2],
                             self.model.is_train: False,
                             self.model.learning_rate : learning_rate
                         }
@@ -249,10 +256,11 @@ class SparseConvClusteringTrainer:
         graph_temp = self.model.get_temp()
 
         inputs_feed = self.reader_factory.get_class(self.reader_type)(self.test_files, self.num_max_entries, self.num_data_dims, self.num_batch).get_feeds(shuffle=False)
-
         inference_streamer = InferenceOutputStreamer(output_path=self.test_out_path, cache_size=100)
         inference_streamer.start_thread()
-
+        print(type(inputs_feed))
+        print("****************************************")
+        print("Test Input shape: ", inputs_feed.get_shape().as_list())
         init = [tf.global_variables_initializer(), tf.local_variables_initializer()]
         with tf.Session() as sess:
             sess.run(init)
