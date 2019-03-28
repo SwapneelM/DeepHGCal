@@ -39,7 +39,9 @@ class ModelBuilder:
         model_type = self.config['model_type']
         try:
             model = globals()[model_type](*self.arguments_tuple)
+            print("Model Type:", type(model))
         except KeyError:
+            print("KeyError in ModelBuilder")
             model = self.decrypt_model(model_type)
         return model
 

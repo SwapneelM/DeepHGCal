@@ -46,6 +46,7 @@ class FixNumEntriesReader(DataAndNumEntriesReader):
         else:
             return data[:, 0:-1, :], num_entries
 
+
 class FixNumEntriesReaderSeeds(FixNumEntriesReader):
     def __init__(self, files_list, num_max_entries, num_data_dims, num_batch, repeat=True, shuffle_size=None,
                  return_seeds=True):

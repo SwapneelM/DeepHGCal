@@ -22,7 +22,7 @@ class SparseConvClusteringTrainer:
         self.read_config(config_file, config_name)
         self.config_name = config_name
 
-        self.from_scratch = int(self.config['from_scratch'])==1
+        self.from_scratch = int(self.config['from_scratch']) == 1
         self.model_path = self.config['model_path']
         self.summary_path = self.config['summary_path']
         self.test_out_path = self.config['test_out_path']
@@ -74,7 +74,9 @@ class SparseConvClusteringTrainer:
         except AttributeError:
             pass
         self.model.initialize()
-        self.saver_sparse = tf.train.Saver(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.model.get_variable_scope()))
+        self.saver_sparse = tf.train.Saver(
+            tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.model.get_variable_scope())
+        )
 
     def initialize_test(self):
         self.model = ModelBuilder(self.config).get_model()
@@ -103,6 +105,7 @@ class SparseConvClusteringTrainer:
     def train(self):
         self.initialize()
         print("Beginning to train network with parameters", get_num_parameters(self.model.get_variable_scope()))
+        print("Variable scope:", self.model.get_variable_scope())
         placeholders = self.model.get_placeholders()
 
         if self.from_scratch:
@@ -125,8 +128,8 @@ class SparseConvClusteringTrainer:
         graph_output = self.model.get_compute_graphs()
         graph_temp = self.model.get_temp()
 
-        if self.plot_after!=-1:
-            data_plotting = None # TODO: Load
+        if self.plot_after != -1:
+            data_plotting = None  # TODO: Load
 
         if self.from_scratch:
             self.clean_summary_dir()
@@ -166,11 +169,11 @@ class SparseConvClusteringTrainer:
                 if hasattr(self.model, "learningrate_scheduler"):
                     learning_rate = self.model.learningrate_scheduler.get_lr(iteration_number)
                 else:
-                    learning_rate=self.model.learning_rate
-                if iteration_number==0:
+                    learning_rate = self.model.learning_rate
+                if iteration_number == 0:
                     print('learning rate ', learning_rate)
  
-                if len(placeholders)==5:
+                if len(placeholders) == 5:
                     inputs_train_dict = {
                         placeholders[0]: inputs_train[0][:, :, self.spatial_features_indices],
                         placeholders[1]: inputs_train[0][:, :, self.spatial_features_local_indices],
@@ -178,7 +181,7 @@ class SparseConvClusteringTrainer:
                         placeholders[3]: inputs_train[0][:, :, self.target_indices],
                         placeholders[4]: inputs_train[1],
                         self.model.is_train: True,
-                        self.model.learning_rate : learning_rate
+                        self.model.learning_rate: learning_rate
                     }
                 else:
                     inputs_train_dict = {
@@ -189,7 +192,7 @@ class SparseConvClusteringTrainer:
                         placeholders[4]: inputs_train[1],
                         # placeholders[5]: inputs_train[2],
                         self.model.is_train: True,
-                        self.model.learning_rate : learning_rate
+                        self.model.learning_rate: learning_rate
                     }
 
                 t, eval_loss, _, eval_summary, eval_output = sess.run([graph_temp, graph_loss, graph_optmiser, graph_summary, graph_output], feed_dict=inputs_train_dict)
@@ -200,7 +203,7 @@ class SparseConvClusteringTrainer:
 
                 if iteration_number % self.validate_after == 0:
                     inputs_validation = sess.run(list(inputs_validation_feed))
-                    self.inputs_plot=inputs_validation
+                    self.inputs_plot = inputs_validation
 
                     if len(placeholders) == 5:
                         inputs_validation_dict = {
@@ -210,7 +213,7 @@ class SparseConvClusteringTrainer:
                             placeholders[3]: inputs_validation[0][:, :, self.target_indices],
                             placeholders[4]: inputs_validation[1],
                             self.model.is_train: False,
-                            self.model.learning_rate : learning_rate
+                            self.model.learning_rate: learning_rate
                         }
                     else:
                         inputs_validation_dict = {
@@ -221,10 +224,11 @@ class SparseConvClusteringTrainer:
                             placeholders[4]: inputs_validation[1],
                             # placeholders[5]: inputs_validation[2],
                             self.model.is_train: False,
-                            self.model.learning_rate : learning_rate
+                            self.model.learning_rate: learning_rate
                         }
 
-                    eval_loss_validation, eval_summary_validation= sess.run([graph_loss, graph_summary_validation], feed_dict=inputs_validation_dict)
+                    eval_loss_validation, eval_summary_validation = sess.run([graph_loss, graph_summary_validation],
+                                                                             feed_dict=inputs_validation_dict)
                     summary_writer.add_summary(eval_summary_validation, iteration_number)
                     print("Validation - Iteration %4d: loss %.6E" % (iteration_number, eval_loss_validation))
 
@@ -276,7 +280,7 @@ class SparseConvClusteringTrainer:
             while iteration_number < int(np.ceil(self.num_testing_samples / self.num_batch)):
                 inputs_test = sess.run(list(inputs_feed))
 
-                if len(placeholders)==5:
+                if len(placeholders) == 5:
                     inputs_train_dict = {
                         placeholders[0]: inputs_test[0][:, :, self.spatial_features_indices],
                         placeholders[1]: inputs_test[0][:, :, self.spatial_features_local_indices],
@@ -293,7 +297,7 @@ class SparseConvClusteringTrainer:
                         placeholders[2]: inputs_test[0][:, :, self.other_features_indices],
                         placeholders[3]: inputs_test[0][:, :, self.target_indices],
                         placeholders[4]: inputs_test[1],
-                        placeholders[5]: inputs_test[2],
+                        # placeholders[5]: inputs_test[2],
                         self.model.is_train: False,
                         self.model.learning_rate : 0
                     }
