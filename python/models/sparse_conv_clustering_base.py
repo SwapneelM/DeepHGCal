@@ -5,12 +5,13 @@ import inspect
 import sys
 import importlib
 
+
 class lr_scheduler(object):
     def __init__(self, lr_dict=[], lr=0.0001):
         
-        self.lr_dict=lr_dict
-        self.lr=lr
-        self.next_change=0
+        self.lr_dict = lr_dict
+        self.lr = lr
+        self.next_change = 0
         
     def check_next(self,iteration):
         
@@ -18,10 +19,10 @@ class lr_scheduler(object):
             key = self.lr_dict[i][0]
             self.next_change = key
             if key > iteration:
-                print('next change at iteration ',key , 'just changed learning rate to ',self.lr)
+                print('next change at iteration ', key, 'just changed learning rate to ', self.lr)
                 return
-            self.lr=self.lr_dict[i][1]
-        print('iteration',iteration , 'learning rate at ', self.lr)
+            self.lr = self.lr_dict[i][1]
+        print('iteration', iteration , 'learning rate at ', self.lr)
         
     def get_lr(self,iteration):
         if iteration >= self.next_change:
@@ -37,9 +38,6 @@ class lr_scheduler(object):
             self.lr_dict.append((int(scaler*i) , lr))
         print(self.lr_dict)
             
-    
-
-        
 
 class SparseConvClusteringBase(Model):
     def __init__(self, n_space, n_space_local, n_others, n_target_dim, batch_size, max_entries, learning_rate=0.0001):
@@ -53,11 +51,9 @@ class SparseConvClusteringBase(Model):
         self.learning_rate = tf.placeholder(tf.float32,name='learning_rate')
         self.start_learning_rate = learning_rate
         self.learningrate_scheduler = lr_scheduler(lr=learning_rate)
-        self.use_seeds=False
+        self.use_seeds = False
         self.is_train = tf.placeholder(tf.bool, name="is_train");
-        
 
-        
     def initialize(self):
         if self.initialized:
             print("Already initialized")
@@ -104,11 +100,10 @@ class SparseConvClusteringBase(Model):
     def get_variable_scope(self):
         return 'sparse_conv_v1'
 
-
     def _get_loss(self):
         diff_sq = (self._graph_output - self._placeholder_targets) ** 2 * tf.cast(
-            tf.sequence_mask(tf.squeeze(self._placeholder_num_entries, axis=1), maxlen=self.max_entries)[:, :,
-            tf.newaxis], tf.float32)
+            tf.sequence_mask(tf.squeeze(self._placeholder_num_entries, axis=1),
+                             maxlen=self.max_entries)[:, :, tf.newaxis], tf.float32)
         diff_sq = tf.reduce_sum(diff_sq, axis=[-1, -2])
 
         loss_unreduced = (diff_sq / tf.cast(self._placeholder_num_entries, tf.float32)) * tf.cast(

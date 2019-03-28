@@ -1,5 +1,5 @@
 from readers.DataAndNumEntriesReader import DataAndNumEntriesReader
-from readers.FixedNumEntriesReader import FixNumEntriesReader,FixNumEntriesReaderSeeds, FixNumEntriesReaderSeedsSeparate
+from readers.FixedNumEntriesReader import FixNumEntriesReader, FixNumEntriesReaderSeeds, FixNumEntriesReaderSeedsSeparate, TNTuplesEntriesReader
 
 
 class ReaderFactory:
@@ -12,3 +12,5 @@ class ReaderFactory:
             return DataAndNumEntriesReader
         if reader_name == "fixed_num_entries_reader_seeds_separate":
             return FixNumEntriesReaderSeedsSeparate
+        if reader_name == "tntuples_entries_reader":
+            return TNTuplesEntriesReader

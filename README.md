@@ -25,6 +25,13 @@ source lxplus_env.sh
 conda install -c anaconda cudnn=7.1.2  # also installs cudatoolkit=9.0
 ```
 
+* You will (probably) need to symlink (`ln -s`) your libstdc++.so.6 from libstdc++.so.6.0.19 to 6.0.25
+```
+unlink $CONDA_PREFIX/lib/libstdc++.so.6
+ln -s $CONDA_PREFIX/lib/libstdc++.so.6.0.25 $CONDA_PREFIX/lib/libstdc++.so.6
+
+```
+
 
 ## Usage
 
@@ -39,28 +46,29 @@ The experiments are usually conducted in three steps:
 * Check using the `gpustat` command and accordingly set the environment variable `CUDA_VISIBLE_DEVICES` to the available GPU ID.
 * Check out off-the-shelf combinations of training configurations:
 
-| Train File                            | Path to Config File   | Config Name                   |
+| Path to Train File                    | Path to Config File   | Config Name                   |
 | :------------------------------------:|:---------------------:|:-----------------------------:|
 | bin/train/sparse_conv_clustering      | configs/Jan19cfg.ini  | single_neighbours             |
 | bin/train/sparse_conv_clustering      | configs/Jan19cfg.ini  | hidden_aggregators_plusmean   |
+| bin/train/sparse_conv_clustering      | configs/Jan19cfg.ini  | tntuples                      |
 
 
 ``` 
-python bin/train/train_file.py path/to/config.ini config_name
+python <path to train file> <path to config file> config_name
 ```
 
 
 ### Testing
 
 ```
-python bin/train/train_file.py path/to/config.ini config_name --test True
+python <path to train file> <path to config file> config_name --test True
 ```
 
 
 ### Plotting and analysis
 
 ```
-python bin/plot/plot_file.py path/to/config.ini config_name
+python bin/plot/plot_file.py <path to config file> config_name
 ```
 
 For clustering, the plot_file can be `plot_inference_clustering.py`
