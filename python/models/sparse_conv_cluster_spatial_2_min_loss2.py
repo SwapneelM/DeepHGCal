@@ -90,6 +90,7 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
 
         diff_sq = (prediction[:, :, 0:2] - targets) ** 2.
         print("\n\nDifference Squared:", diff_sq.shape)
+
         diff_sq_a = diff_sq[:, :, 0]
         diff_sq_b = diff_sq[:, :, 1]
 
@@ -98,11 +99,6 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
         e_for_loss = sqrt_energies
         esum_for_loss_a = sqrt_energy_a
         esum_for_loss_b = sqrt_energy_b
-
-        if self.E_loss:
-            e_for_loss = energies
-            esum_for_loss_a = energy_a
-            esum_for_loss_b = energy_b
 
         loss_a = tf.reduce_sum(diff_sq_a * e_for_loss[:, :, 0], axis=1) / (esum_for_loss_a)
         loss_b = tf.reduce_sum(diff_sq_b * e_for_loss[:, :, 1], axis=1) / (esum_for_loss_b)
@@ -126,27 +122,49 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
 
         self.total_loss = tf.reduce_mean(total_loss)
 
-        sqrt_response_a = tf.reduce_sum(prediction[:, :, 0]*sqrt_energies[:, :, 0], axis=1) / sqrt_energy_a
-        sqrt_response_b = tf.reduce_sum(prediction[:, :, 1]*sqrt_energies[:, :, 1], axis=1) / sqrt_energy_b
+        sqrt_response_a = tf.reduce_sum(prediction[:, :, 0] * sqrt_energies[:, :, 0], axis=1) / sqrt_energy_a
+        sqrt_response_b = tf.reduce_sum(prediction[:, :, 1] * sqrt_energies[:, :, 1], axis=1) / sqrt_energy_b
 
-        sqrt_total_response = tf.concat([sqrt_response_a , sqrt_response_b], axis=0)
+        sqrt_total_response = tf.concat([sqrt_response_a, sqrt_response_b], axis=0)
 
         self.mean_sqrt_resolution, self.variance_sqrt_resolution = self.normalise_response(sqrt_total_response)
 
         if self.sum_loss:
             print("get_loss2:", type(self.total_loss))
             return self.total_loss
+
         print("Loss:", type(tf.reduce_mean(old_loss)))
         return tf.reduce_mean(old_loss)  # + tf.reduce_mean(0.1*tf.abs(1-self.mean_resolution)+0.1*self.variance_resolution)
 
     def tntuples_loss(self):
         assert self._graph_output.shape[2] >= 2
-        print("TNTuples placeholder num entries shape")
+        print('TNTuples Loss\n===========\n')
+
         num_entries = tf.squeeze(self._placeholder_num_entries, axis=1)
-        print('num_entries', num_entries.shape)
+        print('num_entries: ', num_entries.shape)
+
+        prediction = self._graph_output
+        targets = self._placeholder_targets
+        print('prediction:', prediction.shape)
+        print('targets:', targets.shape)
+
+        cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=targets)
+
+        # prediction = tf.clip_by_value(prediction, 1e-5, 1 - 1e-5)
+        # single_xentr = - ((targets * tf.log(prediction)) + ((1 - targets) * tf.log(1 - prediction)))
+        # print('single_xentr:', single_xentr.shape)
+
+        return tf.reduce_mean(cross_entropy_loss)
+
+    def _get_loss(self):
+        return self.tntuples_loss()
+
+    def create_loss_weight_by_energy(self, loss_per_vertex):
+
+        num_entries = tf.squeeze(self._placeholder_num_entries, axis=1)
+        print('num_entries',num_entries.shape)
         energy = self._placeholder_other_features[:, :, 0]
-        print("Energy type:", type(energy))
-        ###
+
         sqrt_energy = None
         if self.log_loss:
             sqrt_energy = tf.log(energy+1)
@@ -157,37 +175,36 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
         targets = self._placeholder_targets
 
         maxlen = self.max_entries
-        # if self.use_seeds:
-        #    energy = energy[:, 0:-1]
-        #    targets = targets[:, 0:-1, :]
+        #if self.use_seeds:
+        #    energy=energy[:,0:-1]
+        #    targets = targets[:,0:-1,:]
 
-        total_energy = tf.reduce_sum(energy, axis=-1)
+        total_energy   = tf.reduce_sum(energy, axis=-1)
 
-        print('total_energy', total_energy.shape)
+        print('total_energy',total_energy.shape)
 
-        energies = targets * energy[:, :, tf.newaxis]
-        energy_sums = tf.reduce_sum(energies, axis=1)
-        energy_a = energy_sums[:, 0]
-        energy_b = energy_sums[:, 1]
+        energies = targets * energy[:,:, tf.newaxis]
+        energy_sums = tf.reduce_sum(energies , axis=1)
+        energy_a = energy_sums[:,0]
+        energy_b = energy_sums[:,1]
 
-        print('energy_a', energy_a.shape)
+        print('energy_a',energy_a.shape)
 
-        sqrt_energies = targets * sqrt_energy[:, :, tf.newaxis]
+        sqrt_energies = targets * sqrt_energy[:,:, tf.newaxis]
 
-        print('sqrt_energies', sqrt_energies.shape)
+        print('sqrt_energies',sqrt_energies.shape)
 
-        sqrt_energy_sum = tf.reduce_sum(sqrt_energies, axis=1)
-        sqrt_energy_a = sqrt_energy_sum[:, 0]
-        sqrt_energy_b = sqrt_energy_sum[:, 1]
+        sqrt_energy_sum = tf.reduce_sum(sqrt_energies , axis=1)
+        sqrt_energy_a = sqrt_energy_sum[:,0]
+        sqrt_energy_b = sqrt_energy_sum[:,1]
 
-        print('sqrt_energy_sum', sqrt_energy_sum.shape)
+        print('sqrt_energy_sum',sqrt_energy_sum.shape)
 
-        diff_sq = (prediction[:, :, 0:2] - targets) ** 2.
-        print("\n\nDifference Squared:", diff_sq.shape)
-        diff_sq_a = diff_sq[:, :, 0]
-        diff_sq_b = diff_sq[:, :, 1]
+        diff_sq = loss_per_vertex
+        diff_sq_a = diff_sq[:,:,0]
+        diff_sq_b = diff_sq[:,:,1]
 
-        print('diff_sq_a', diff_sq_a.shape)
+        print('diff_sq_a',diff_sq_a.shape)
 
         e_for_loss = sqrt_energies
         esum_for_loss_a = sqrt_energy_a
@@ -198,63 +215,75 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
             esum_for_loss_a = energy_a
             esum_for_loss_b = energy_b
 
-        loss_a = tf.reduce_sum(diff_sq_a * e_for_loss[:, :, 0], axis=1) / (esum_for_loss_a)
-        loss_b = tf.reduce_sum(diff_sq_b * e_for_loss[:, :, 1], axis=1) / (esum_for_loss_b)
+        loss_a = tf.reduce_sum(diff_sq_a * e_for_loss[:,:,0],axis=1) / (esum_for_loss_a)
+        loss_b = tf.reduce_sum(diff_sq_b * e_for_loss[:,:,1],axis=1) / (esum_for_loss_b)
 
-        old_loss = (tf.reduce_sum(diff_sq_a * e_for_loss[:, :, 0], axis=1) +
-                    tf.reduce_sum(diff_sq_b * e_for_loss[:, :, 1], axis=1)) / (esum_for_loss_a+esum_for_loss_b)
 
-        print('loss_a', loss_a.shape)
+        old_loss = (tf.reduce_sum(diff_sq_a * e_for_loss[:,:,0],axis=1) + tf.reduce_sum(diff_sq_b * e_for_loss[:,:,1],axis=1))/(esum_for_loss_a+esum_for_loss_b)
+
+        print('loss_a',loss_a.shape)
 
         total_loss = (loss_a + loss_b)/2.
 
-        response_a = tf.reduce_sum(prediction[:, :, 0] * energy, axis=1) / energy_a
-        response_b = tf.reduce_sum(prediction[:, :, 1] * energy, axis=1) / energy_b
+        response_a = tf.reduce_sum(prediction[:,:,0]*energy, axis=1) / energy_a
+        response_b = tf.reduce_sum(prediction[:,:,1]*energy, axis=1) / energy_b
 
+        print('response_a',response_a.shape)
 
-        print('response_a', response_a.shape)
-
-        total_response = tf.concat([response_a, response_b], axis=0)
+        total_response = tf.concat([response_a , response_b], axis=0)
 
         self.mean_resolution, self.variance_resolution = self.normalise_response(total_response)
 
+        low_energy_resp = tf.where(energy_a<20000., response_a, tf.zeros_like(response_a))
+        high_energy_resp = tf.where(energy_a>40000., response_a, tf.zeros_like(response_a))
+        n_low_energy = tf.where(energy_a<20000., tf.zeros_like(response_a)+1, tf.zeros_like(response_a))
+        n_high_energy = tf.where(energy_a>40000., tf.zeros_like(response_a)+1, tf.zeros_like(response_a))
+
+        low_energy_mean = tf.reduce_sum(low_energy_resp,axis=0,keepdims=True) / tf.reduce_sum(n_low_energy,axis=0,keepdims=True)
+        low_energy_mean = tf.tile(low_energy_mean, [low_energy_resp.shape[0]])
+        self.low_energy_mean  = tf.reduce_mean(low_energy_mean)
+        high_energy_mean = tf.reduce_sum(high_energy_resp,axis=0,keepdims=True) / tf.reduce_sum(n_high_energy,axis=0,keepdims=True)
+        high_energy_mean = tf.tile(high_energy_mean, [low_energy_resp.shape[0]])
+        self.high_energy_mean = tf.reduce_mean(high_energy_mean)
+
+        low_energy_resp = tf.where(n_low_energy>0., low_energy_resp, low_energy_mean)
+        self.low_energy_var  = tf.reduce_mean(tf.reduce_sum((low_energy_resp-low_energy_mean)**2,axis=0) / tf.reduce_sum(n_low_energy,axis=0))
+
+        high_energy_resp = tf.where(n_high_energy>0., high_energy_resp, high_energy_mean)
+        self.high_energy_var = tf.reduce_mean(tf.reduce_sum((high_energy_resp-high_energy_mean)**2,axis=0) / tf.reduce_sum(n_high_energy,axis=0))
+
+
+
+
         self.total_loss = tf.reduce_mean(total_loss)
 
-        sqrt_response_a = tf.reduce_sum(prediction[:, :, 0]*sqrt_energies[:, :, 0], axis=1) / sqrt_energy_a
-        sqrt_response_b = tf.reduce_sum(prediction[:, :, 1]*sqrt_energies[:, :, 1], axis=1) / sqrt_energy_b
+        sqrt_response_a = tf.reduce_sum(prediction[:,:,0]*sqrt_energies[:,:,0], axis=1) / sqrt_energy_a
+        sqrt_response_b = tf.reduce_sum(prediction[:,:,1]*sqrt_energies[:,:,1], axis=1) / sqrt_energy_b
 
         sqrt_total_response = tf.concat([sqrt_response_a , sqrt_response_b], axis=0)
 
         self.mean_sqrt_resolution, self.variance_sqrt_resolution = self.normalise_response(sqrt_total_response)
 
+
         if self.sum_loss:
-            print("tntuples_loss():", type(self.total_loss))
             return self.total_loss
-        print("tntuples Loss:", tf.reduce_mean(old_loss))
-        return tf.reduce_mean(old_loss)  # + tf.reduce_mean(0.1*tf.abs(1-self.mean_resolution)+0.1*self.variance_resolution)
-
-
-    def _get_loss(self):
-
-        return self.get_loss2()
+        return tf.reduce_mean(old_loss)
 
 
     def compute_output_seed_driven(self,_input,in_seed_idxs):
-
 
         net = _input
 
         seed_idxs = in_seed_idxs
 
-        nfilters=24
-        nspacefilters=30
-        nspacedim=4
-
+        nfilters = 24
+        nspacefilters = 30
+        nspacedim = 4
 
         feat = sparse_conv_collapse(net)
 
         for i in range(8):
-            #feat = tf.Print(feat, [feat[0,2146,:]], 'space layer '+str(i),summarize=30)
+            # feat = tf.Print(feat, [feat[0,2146,:]], 'space layer '+str(i),summarize=30)
             feat = sparse_conv_seeded3(feat,
                                        seed_idxs,
                                        nfilters=nfilters,
@@ -264,23 +293,17 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
                                        compress_before_propagate=True,
                                        use_edge_properties=4)
 
-
         output = tf.layers.dense(feat, 3, activation=tf.nn.relu)
 
         return output
 
-    def compute_output_full_adjecency(self,_input):
-
+    def compute_output_full_adjecency(self, _input):
         pass
 
-
-
-    def compute_output_seed_driven_neighbours(self,_input,seed_idxs):
-
+    def compute_output_seed_driven_neighbours(self, _input, seed_idxs):
         feat = sparse_conv_collapse(_input)
 
-
-        feat_list=[]
+        feat_list = []
         feat = sparse_conv_make_neighbors_simple(feat,
                                                  num_neighbors=16,
                                                  n_output=24,
@@ -851,13 +874,13 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
                                                   plus_mean=plusmean
                                                   )
             # self.temp_feat_visualize.append(xxx)
-            feat = tf.layers.batch_normalization(feat,training=self.is_train, momentum=self.momentum)
+            feat = tf.layers.batch_normalization(feat, training=self.is_train, momentum=self.momentum)
             feat_list.append(feat)
             # feat = tf.layers.dropout(feat, rate=0.0005, training=self.is_train)
 
         feat = tf.concat(feat_list, axis=-1)
-        feat = tf.layers.dense(feat, 48, activation=tf.nn.relu)
-        feat = tf.layers.dense(feat, 3, activation=tf.nn.relu)
+        feat = tf.layers.dense(feat, 100, activation=tf.nn.relu)
+        # feat = tf.layers.dense(feat, 3, activation=tf.nn.relu)
 
         return feat
 
@@ -1182,15 +1205,15 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
     def _compute_output(self):
 
         feat = self._placeholder_other_features
-        print("feat", feat.shape)
+        print("\nFeatures:", feat.shape)
         space_feat = self._placeholder_space_features
         local_space_feat = self._placeholder_space_features_local
         num_entries = self._placeholder_num_entries
         n_batch = space_feat.shape[0]
 
-        seed_idxs=None
+        # seed_idxs=None
 
-        #if self.use_seeds:
+        # if self.use_seeds:
         #    feat=feat[:,0:-1,:]
         #    space_feat=space_feat[:,0:-1,:]
         #    local_space_feat=local_space_feat[:,0:-1,:]
@@ -1201,9 +1224,10 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
         #    seed_idxs=tf.cast(seed_idxs+0.1,dtype=tf.int32)
         #    print(seed_idxs.shape)
 
+        # For Jan: Are these the random seeds to be modified to tracks? Would that help with better/faster clustering?
         nrandom = 1
-        random_seeds = tf.random_uniform(shape=(int(n_batch), nrandom), minval=0, maxval=2102, dtype=tf.int64)
-        print('random_seeds', random_seeds.shape)
+        random_seeds = tf.random_uniform(shape=(int(n_batch), nrandom), minval=0, maxval=3600, dtype=tf.int64)
+        # print('random_seeds', random_seeds.shape)
         try:
             seeds = tf.concat([self._placeholder_seed_indices, random_seeds], axis=-1)
             seeds = tf.transpose(seeds, [1, 0])
@@ -1215,185 +1239,31 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
             print("\nSetting 'seeds' to None since _placeholder_seed_indices is not defined")
             seeds = None
             pass
+
         net_in = construct_sparse_io_dict(feat, space_feat, local_space_feat,
                                           tf.squeeze(num_entries))
 
-        net = sparse_conv_normalise(net_in, log_energy=True)
+        # Add custom condition to exclude normalisation for tntuples
+        if self.get_variable_scope() == 'tntuples':
+            net = net_in
+        else:
+            net = sparse_conv_normalise(net_in, log_energy=True)
 
-        #net = sparse_conv_add_simple_seed_labels(net,seeds)
-
-        #simple_input = tf.concat([space_feat,local_space_feat,feat],axis=-1)
-        #output=self.compute_output_seed_driven(net,seeds)#self._placeholder_seed_indices)
-        # output = self.compute_output_seed_driven_neighbours(net,seeds)
-        #output = self.compute_output_neighbours(net,self._placeholder_seed_indices)
+        # switch compute_output function based on variable scope/model being called
         if self.get_variable_scope() == 'dgcnn':
             output = self.compute_output_dgcnn(net, self._placeholder_seed_indices)
-        #elif self.get_variable_scope() == 'moving_seeds':
-        #    output = self.compute_output_moving_seeds(net,self._placeholder_seed_indices)
-        #elif self.get_variable_scope() == 'moving_seeds_dim3':
-        #    output = self.compute_output_moving_seeds_all_generic(net,self._placeholder_seed_indices,3,1)
-        #elif self.get_variable_scope() == 'moving_seeds_dim4':
-        #    output = self.compute_output_moving_seeds_all_generic(net,self._placeholder_seed_indices,4,1)
-        #elif self.get_variable_scope() == 'moving_seeds_dim4_only_forward':
-        #    output = self.compute_output_moving_seeds_all_generic(net,self._placeholder_seed_indices,4,1,True)
-        #elif self.get_variable_scope() == 'moving_seeds_dim3_2':
-        #    output = self.compute_output_moving_seeds_all_generic(net,self._placeholder_seed_indices,5,2)
-        #elif self.get_variable_scope() == 'moving_seeds_dim4_2':
-        #    output = self.compute_output_moving_seeds_all_generic(net,self._placeholder_seed_indices,6,2)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds3_dim4':
-        #    output = self.compute_output_moving_seeds3(net,seeds,4,edge_multi=1)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim4':
-        #    output = self.compute_output_moving_seeds4(net,seeds,4,edge_multi=1)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim4_2':
-        #    output = self.compute_output_moving_seeds4(net,seeds,4,edge_multi=2)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim4_v100':
-        #    output = self.compute_output_moving_seeds4(net,seeds,4,edge_multi=1)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_alt_dim4':
-        #    output = self.compute_output_moving_seeds4_alt(net,seeds,4,edge_multi=1) #compute_output_moving_seeds4_alt2
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_alt2':
-        #    output = self.compute_output_moving_seeds4_alt2(net,seeds,4,edge_multi=1) #
-        #
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim3_m1_d6_f32_s12_p8':
-        #    output = self.compute_output_moving_seeds4_generic(net,seeds,
-        #                                                       nspacedim=3,
-        #                                                       edge_multi=1,
-        #                                                       depth=6,
-        #                                                       nfilters=32,
-        #                                                       n_seeds=12,
-        #                                                       npropagate=8)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim3_m1_d15_f32_s4_p8':
-        #    output = self.compute_output_moving_seeds4_generic(net,seeds,
-        #                                                       nspacedim=3,
-        #                                                       edge_multi=1,
-        #                                                       depth=15,
-        #                                                       nfilters=32,
-        #                                                       n_seeds=4,
-        #                                                       npropagate=8)
-        #
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim4_m1_d6_f32_s12_p8':
-        #    output = self.compute_output_moving_seeds4_generic(net,seeds,
-        #                                                       nspacedim=4,
-        #                                                       edge_multi=1,
-        #                                                       depth=6,
-        #                                                       nfilters=32,
-        #                                                       n_seeds=12,
-        #                                                       npropagate=8)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim4_m1_d15_f32_s4_p8':
-        #    output = self.compute_output_moving_seeds4_generic(net,seeds,
-        #                                                       nspacedim=4,
-        #                                                       edge_multi=1,
-        #                                                       depth=15,
-        #                                                       nfilters=32,
-        #                                                       n_seeds=4,
-        #                                                       npropagate=8)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim4_m1_d15_f32_s4_p8_e':
-        #    output = self.compute_output_moving_seeds4_generic(net,seeds,
-        #                                                       nspacedim=4,
-        #                                                       edge_multi=1,
-        #                                                       depth=15,
-        #                                                       nfilters=32,
-        #                                                       n_seeds=4,
-        #                                                       npropagate=8,
-        #                                                       add_edge=True)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds4_dim4_m1_d15_f32_s4_p8_e_hi':
-        #    output = self.compute_output_moving_seeds4_generic(net,seeds,
-        #                                                       nspacedim=4,
-        #                                                       edge_multi=1,
-        #                                                       depth=15,
-        #                                                       nfilters=32,
-        #                                                       n_seeds=4,
-        #                                                       npropagate=8,
-        #                                                       add_edge=True,
-        #                                                       weight_filters=[64,64,64],
-        #                                                       seed_filters=[],
-        #                                                       out_filters=[64,64,64])
-        #
-        #
-        #elif self.get_variable_scope() == 'moving_seeds5_dim4_m1_d10_f32_s4_p24':
-        #    output = self.compute_output_moving_seeds5(net,seeds,
-        #                                                       nspacedim=4,
-        #                                                       edge_multi=1,
-        #                                                       depth=10,
-        #                                                       nfilters=32,
-        #                                                       n_seeds=4,
-        #                                                       npropagate=24)
-        #
-        #elif self.get_variable_scope() == 'aggregator_simple':
-        #    output = self.compute_output_aggregator_simple(net,seeds)
-        #
-        #elif self.get_variable_scope() == 'aggregator_simple_Eloss':
-        #    self.E_loss=True
-        #    output = self.compute_output_aggregator_simple(net,seeds)
-        #
-        #
-        #
-        #elif self.get_variable_scope() == 'aggregator_simple2':
-        #    output = self.compute_output_aggregator_simple(net,seeds,altconfig=True)
-        #
-        #elif self.get_variable_scope() == 'aggregator_simple_weighted_agg':
-        #    output = self.compute_output_aggregator_simple(net,seeds,dropout=-1,weighted_agg_pos=True)
-        #
-        #elif self.get_variable_scope() == 'aggregator_simple_weighted_agg_Eloss':
-        #    self.E_loss=True
-        #    output = self.compute_output_aggregator_simple(net,seeds,dropout=-1,weighted_agg_pos=True)
-        #
-        #elif self.get_variable_scope() == 'aggregator_simple_do_hiPar':
-        #    output = self.compute_output_aggregator_simple(net,seeds,dropout=0.1,hipar=True)
-        #
-        ##elif self.get_variable_scope() == 'neighbours':
-        #    output = self.compute_output_neighbours(net,seeds)
-        #
-        #elif self.get_variable_scope() == 'neighbours_sumloss':
-        #    self.sum_loss=True
-        #    output = self.compute_output_neighbours(net,seeds)
-        #
-        #
-        #elif self.get_variable_scope() == 'neighbours_multipass':
-        #    output = self.compute_output_make_neighbors_simple_multipass(net,seeds)
-        #
-        #elif self.get_variable_scope() == 'neighbours_multipass_Eloss_sumloss':
-        #    self.E_loss=True
-        #    self.sum_loss=True
-        #    output = self.compute_output_make_neighbors_simple_multipass(net,seeds)
-        #
-        #elif self.get_variable_scope() == 'neighbours_plus_aggregator_simple':
-        #    output = self.compute_output_seed_driven_neighbours(net,seeds)
-        #
-        #elif self.get_variable_scope() == 'moving_seeds_test':
-        #    output = self.compute_output_single_neighbours(net,seeds)
-        #
-        #elif self.get_variable_scope() == 'hidden_aggregators'  :
-        #    output = self.compute_output_hidden_aggregators(net,seeds)
-        elif self.get_variable_scope() == 'hidden_aggregators_plusmean'  :
+
+        elif self.get_variable_scope() == 'hidden_aggregators_plusmean':
             self.sum_loss = True
             output = self.compute_output_hidden_aggregators(net, seeds, plusmean=True)
 
         elif self.get_variable_scope() == 'tntuples':
             self.sum_loss = True
-            print("\nCalculating Loss")
             output = self.compute_output_hidden_aggregators(net, seeds, plusmean=True)
 
         elif self.get_variable_scope() == 'hidden_aggregators_plusmean_lowpara':
             self.sum_loss=True
             output = self.compute_output_hidden_aggregators_lowpara(net, seeds, plusmean=True)
-
-
-
-        #elif self.get_variable_scope() == 'multi_neighbours':
-        #    self.E_loss = True
-        #    output = self.compute_output_multi_neighbours(net,seeds)
 
         elif self.get_variable_scope() == 'single_neighbours':
             output = self.compute_output_single_neighbours(net, seeds)
@@ -1416,26 +1286,36 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
         elif self.get_variable_scope() == 'output_binning20_2':
             output = self.compute_output_binning20_2(net,seeds) 
 
-        #elif self.get_variable_scope() == 'only_global_exchange':
+        # elif self.get_variable_scope() == 'only_global_exchange':
 
         #    output = self.compute_output_only_global_exchange(net,self._placeholder_seed_indices)
-        #elif self.get_variable_scope() == 'seed_driven':
+        # elif self.get_variable_scope() == 'seed_driven':
         #    output = self.compute_output_seed_driven(net, self._placeholder_seed_indices)
         else:
-            output = tf.layers.dense(sparse_conv_collapse(net),3)
+            output = tf.layers.dense(sparse_conv_collapse(net), 3)
 
-        #output=self.compute_output_seed_driven(net,self._placeholder_seed_indices)
-        #output=self.compute_output_full_adjecency(_input)
-        output = tf.layers.dense(output,2)
+        # output=self.compute_output_seed_driven(net,self._placeholder_seed_indices)
+        # output=self.compute_output_full_adjecency(_input)
+
+        # Avoid taking softmax of output for tntuples
+        # since this will mess up the sparse_softmax_cross_entropy loss
+        # (because the loss function will also take a softmax of the logits internally)
+        if self.get_variable_scope() == 'tntuples':
+            output = tf.layers.dense(output, 100)
+            print("\nOutput:", output.shape)
+            self._graph_temp = tf.nn.softmax(output)
+            self._graph_temp = tf.reduce_sum(self._graph_temp[:, :, :], axis=1)/2679.
+            return output
+
+        print("\nVariable Scope is no longer tntuples...\n")
+        print("\nPreparing binary output\n")
+        output = tf.layers.dense(output, 2)
         output = tf.nn.softmax(output)
-
-        self._graph_temp = tf.reduce_sum(output[:,:,:], axis=1)/2679.
-
+        self._graph_temp = tf.reduce_sum(output[:, :, :], axis=1)/2679.
         return output
 
     def get_variable_scope(self):
         return self.config_name
-
 
     def _construct_graphs(self):
         print("Constructing Graphs in Inherited SparseConvClustering Model")
@@ -1446,8 +1326,6 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
                                                               wiggle_frequency=0.1,
                                                               n_points=50)
 
-
-
         with tf.variable_scope(self.get_variable_scope()):
             self.initialized = True
             self.weight_init_width = 1e-6
@@ -1457,11 +1335,11 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
 
             print("\nComputing output (_compute_output).....")
             self._graph_output = self._compute_output()
-
-            # self._graph_temp = tf.nn.softmax(self.__graph_logits)
+            print("\nGraph Output:", self._graph_output.shape)
 
             print("\nGetting loss (_get_loss).....")
             self._graph_loss = self._get_loss()
+            print("\nGraph Loss:", self._graph_loss.shape)
 
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             print("\nUpdate ops:", update_ops)
@@ -1469,15 +1347,15 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
                 self._graph_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self._graph_loss)
 
             # Repeating, maybe there is a better way?
-            self._graph_summary_loss = tf.summary.scalar('Training Loss:', self._graph_loss)
+            self._graph_summary_loss = tf.summary.scalar('loss', self._graph_loss)
             self._graph_summaries = tf.summary.merge([self._graph_summary_loss,
-                                                      tf.summary.scalar('mean-res', self.mean_resolution),
-                                                      tf.summary.scalar('variance-res', self.variance_resolution),
-                                                      tf.summary.scalar('mean-res-sqrt', self.mean_sqrt_resolution),
-                                                      tf.summary.scalar('variance-res-sqrt', self.variance_sqrt_resolution),
+                                                      # tf.summary.scalar('mean-res', self.mean_resolution),
+                                                      # tf.summary.scalar('variance-res', self.variance_resolution),
+                                                      # tf.summary.scalar('mean-res-sqrt', self.mean_sqrt_resolution),
+                                                      # tf.summary.scalar('variance-res-sqrt', self.variance_sqrt_resolution),
                                                       tf.summary.scalar('learning-rate', self.learning_rate)])
 
-            self._graph_summary_loss_validation = tf.summary.scalar('Validation Loss:', self._graph_loss)
+            self._graph_summary_loss_validation = tf.summary.scalar('Validation loss', self._graph_loss)
             self._graph_summaries_validation = tf.summary.merge([self._graph_summary_loss_validation])
 
     def get_losses(self):

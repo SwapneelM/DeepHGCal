@@ -118,7 +118,6 @@ class SparseConvClusteringBase(Model):
         self._placeholder_targets = tf.placeholder(dtype=tf.float32, shape=[self.batch_size, self.max_entries, self.n_target_dim])
         self._placeholder_num_entries = tf.placeholder(dtype=tf.int64, shape=[self.batch_size, 1])
 
-
     def _construct_graphs(self):
         with tf.variable_scope(self.get_variable_scope()):
             self.initialized = True
@@ -143,4 +142,3 @@ class SparseConvClusteringBase(Model):
 
     def get_code(self):
         return inspect.getsource(importlib.import_module(self.__module__))
-

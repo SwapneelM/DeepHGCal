@@ -26,11 +26,31 @@ from models.binning_cluster_eta import BinningClusteringEta
 class ModelBuilder:
     def __init__(self, config):
         self.config = config
+
+        # Add check for one_hot_labels - duplicated in TNTuplesClusteringTrainer
+        # For God only knows what reason...
+        # What was the point of reading in the config in the trainer if you re-read it here...
+        try:
+            self.one_hot_labels = self.config['one_hot_labels']
+            print("One-Hot Labels set to ", self.one_hot_labels)
+        except KeyError:
+            self.one_hot_labels = False
+        # Add condition for handling targets if one-hot-encoded labels are present
+        if self.one_hot_labels == 'True':
+            print("\nExtracting data dimensions containing one-hot labels...")
+            # This should be a two-element array to be used as range of one-hot-labels in the data columns
+            one_hot_dim_range = [int(x) for x in (self.config['target_indices']).split(',')]
+            self.target_indices = tuple(range(one_hot_dim_range[0], one_hot_dim_range[1] + 1))
+            print("\nNumber of one-hot-encoded labels present in data: ", len(self.target_indices))
+        else:
+            print("\nOne-Hot labels not present!")
+            self.target_indices = tuple([int(x) for x in (self.config['target_indices']).split(',')])
+
         self.arguments_tuple = (
             len(tuple([int(x) for x in (self.config['input_spatial_features_indices']).split(',')])),
             len(tuple([int(x) for x in (self.config['input_spatial_features_local_indices']).split(',')])),
             len(tuple([int(x) for x in (self.config['input_other_features_indices']).split(',')])),
-            len(tuple([int(x) for x in (self.config['target_indices']).split(',')])),
+            len(self.target_indices),
             int(self.config['batch_size']),
             int(self.config['max_entries']),
             float(self.config['learning_rate']))
