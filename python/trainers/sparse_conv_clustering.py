@@ -329,7 +329,8 @@ class TNTuplesClusteringTrainer:
                             self.model.learning_rate: learning_rate
                         }
                     else:
-                        raise ValueError("Length of Placeholders is more than inputs_train_dict requires. This might be due to old code.")
+                        raise ValueError("Length of Placeholders is more than inputs_train_dict requires. \
+                        This might be due to old code.")
 
                     eval_loss_validation, eval_summary_validation = sess.run([graph_loss, graph_summary_validation],
                                                                              feed_dict=inputs_validation_dict)
@@ -449,7 +450,7 @@ class TNTuplesClusteringTrainer:
         inference_streamer.start_thread()
         print(type(inputs_feed))
         print("****************************************")
-        print("Test Input shape: ", inputs_feed.get_shape().as_list())
+        print("Test Input shape: ", inputs_feed[0].get_shape().as_list())
         init = [tf.global_variables_initializer(), tf.local_variables_initializer()]
         with tf.Session() as sess:
             sess.run(init)
@@ -476,16 +477,9 @@ class TNTuplesClusteringTrainer:
                         self.model.learning_rate: 0
                     }
                 else:
-                    inputs_train_dict = {
-                        placeholders[0]: inputs_test[0][:, :, self.spatial_features_indices],
-                        placeholders[1]: inputs_test[0][:, :, self.spatial_features_local_indices],
-                        placeholders[2]: inputs_test[0][:, :, self.other_features_indices],
-                        placeholders[3]: inputs_test[0][:, :, self.target_indices],
-                        placeholders[4]: inputs_test[1],
-                        # placeholders[5]: inputs_test[2],
-                        self.model.is_train: False,
-                        self.model.learning_rate: 0
-                    }
+                    raise ValueError("Length of Placeholders is more than inputs_train_dict requires. \
+                    This might be due to old code.")
+
                 t, eval_loss, eval_output = sess.run([graph_temp, graph_loss, graph_output], feed_dict=inputs_train_dict)
 
                 print("Adding", len(inputs_test[0]), "test results")
