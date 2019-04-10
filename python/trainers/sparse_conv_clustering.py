@@ -391,16 +391,9 @@ class TNTuplesClusteringTrainer:
                         self.model.learning_rate : 0
                     }
                 else:
-                    inputs_train_dict = {
-                        placeholders[0]: inputs_test[0][:, :, self.spatial_features_indices],
-                        placeholders[1]: inputs_test[0][:, :, self.spatial_features_local_indices],
-                        placeholders[2]: inputs_test[0][:, :, self.other_features_indices],
-                        placeholders[3]: inputs_test[0][:, :, self.target_indices],
-                        placeholders[4]: inputs_test[1],
-                        placeholders[5]: inputs_test[2],
-                        self.model.is_train: False,
-                        self.model.learning_rate : 0
-                    }
+                    raise ValueError("Length of Placeholders is more than inputs_train_dict requires. \
+                    This might be due to old code.")
+
                 eval_out = sess.run([graph_temp, graph_loss, graph_output]+layer_feats, feed_dict=inputs_train_dict)
                 layer_outs = eval_out[3:]
                 prediction = eval_out[2]
@@ -422,9 +415,7 @@ class TNTuplesClusteringTrainer:
                             plots.plot_clustering_layer_wise_visualize(spatial_features, energy, predictionx, gt, layer_outsx, self.config_name)
                     sys.exit(0)
 
-
                 # Put the condition here!
-
 
                 iteration_number += 1
 

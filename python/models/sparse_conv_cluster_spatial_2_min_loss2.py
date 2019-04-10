@@ -605,7 +605,6 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
                                              weight_filters=[],seed_filters=[],out_filters=[],
                                              useNew=False,use_ms6=False):
 
-
         layer_func = sparse_conv_moving_seeds4
 
         if useNew:
@@ -634,7 +633,6 @@ class SparseConvClusteringSpatialMinLoss2(SparseConvClusteringBase):
         feat = tf.layers.dense(feat,32, activation=tf.nn.relu)
         feat = tf.layers.dense(feat,3, activation=tf.nn.relu)
         return feat
-
 
     def compute_output_moving_seeds4_test(self,_input,seeds,nspacedim,edge_multi=1,
                                           depth=15,nfilters=32,n_seeds=4,npropagate=4,add_edge=False,
