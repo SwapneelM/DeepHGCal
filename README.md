@@ -16,8 +16,9 @@ Before usage, always set up the environment by sourcing XXX_env.sh
 git clone https://github.com/DL4Jets/DeepJetCore.git
 git clone https://github.com/jkiesele/DeepHGCal.git
 cd DeepHGCal
-conda env create -f deephgcal.yml
+conda env create -f deephgcal.yml -n deephgcalenv
 source lxplus_env.sh
+pip install -r requirements.txt
 ```
 
 * You will need the correct version of `tensorflow`, `tensorflow-gpu`(1.8.0) and `cudnn` in order to run on the CMG GPU.
@@ -29,7 +30,6 @@ conda install -c anaconda cudnn=7.1.2  # also installs cudatoolkit=9.0
 ```
 unlink $CONDA_PREFIX/lib/libstdc++.so.6
 ln -s $CONDA_PREFIX/lib/libstdc++.so.6.0.25 $CONDA_PREFIX/lib/libstdc++.so.6
-
 ```
 
 
@@ -54,6 +54,7 @@ The experiments are usually conducted in three steps:
 
 
 ``` 
+cd DeepHGCal/python  # Training must be launched from this directory
 python <path to train file> <path to config file> config_name
 ```
 
@@ -62,7 +63,12 @@ python <path to train file> <path to config file> config_name
 * If you only want to use the repository for training on particle tracks, based on [TrackingNtuples](https://github.com/SwapneelM/TrackingNTuples)
 
 ```
-cd DeepHGCal/python
+git clone https://github.com/SwapneelM/DeepHGCal
+cd DeepHGCal 
+conda env create -f deephgcal.yml -n deephgcalenv
+conda activate deephgcalenv
+pip install -r requirements.txt
+cd python
 python standalone-models/tntuples.py configs/Jan19cfg.ini tntuples
 ```
 
