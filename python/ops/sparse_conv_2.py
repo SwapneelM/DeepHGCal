@@ -1,5 +1,5 @@
 import tensorflow as tf
-from .neighbors import euclidean_squared,indexing_tensor, indexing_tensor_2, sort_last_dim_tensor, get_sorted_vertices_ids
+from .neighbors import euclidean_squared, indexing_tensor, indexing_tensor_2, sort_last_dim_tensor, get_sorted_vertices_ids
 from ops.nn import *
 import numpy as np
 from .initializers import NoisyEyeInitializer
@@ -9,35 +9,6 @@ import math
 ###helper functions
 _sparse_conv_naming_index=0
 
-
-def construct_sparse_io_dict(all_features, spatial_features_global, spatial_features_local, num_entries):
-    """
-    Constructs dictionary for readers of sparse convolution layers
-
-    :param all_features: All features tensor.  Should be of shape [batch_size, num_entries, num_features]
-    :param spatial_features_global: Space like features tensor. Should be of shape [batch_size, num_entries, num_features]
-    :param spatial_features_local: Space like features tensor (sensor sizes, etc.). Should be of shape [batch_size, num_entries, num_features]
-    :param num_entries: Number of entries tensor for each batch entry.
-    :return: dictionary in the format of the sparse conv layer
-    """
-    return {
-        'all_features': all_features,
-        'spatial_features_global': spatial_features_global,
-        'spatial_features_local': spatial_features_local,
-        'num_entries': num_entries
-    }
-
-
-def sparse_conv_collapse(sparse_dict):
-    # This is how PEP8's E128 requires formatting to be done
-    # We would do well to adhere to best practices in our code
-
-    all_features, spatial_features_global, \
-        spatial_features_local, num_entries = \
-        sparse_dict['all_features'], sparse_dict['spatial_features_global'], \
-        sparse_dict['spatial_features_local'], sparse_dict['num_entries']
-
-    return tf.concat([spatial_features_global, all_features, spatial_features_local], axis=-1)
 
 
 def zero_out_by_energy(net):
@@ -158,6 +129,22 @@ def create_edges(vertices_a, vertices_b, zero_is_one_weight=False, n_properties=
     else:
         return edges
 
+def construct_sparse_io_dict(all_features, spatial_features_global, spatial_features_local, num_entries):
+    """
+    Constructs dictionary for readers of sparse convolution layers
+
+    :param all_features: All features tensor.  Should be of shape [batch_size, num_entries, num_features]
+    :param spatial_features_global: Space like features tensor. Should be of shape [batch_size, num_entries, num_features]
+    :param spatial_features_local: Space like features tensor (sensor sizes, etc.). Should be of shape [batch_size, num_entries, num_features]
+    :param num_entries: Number of entries tensor for each batch entry.
+    :return: dictionary in the format of the sparse conv layer
+    """
+    return {
+        'all_features': all_features,
+        'spatial_features_global': spatial_features_global,
+        'spatial_features_local': spatial_features_local,
+        'num_entries': num_entries
+    }
 
 def sparse_conv_multipl_dense(in_tensor, nfilters, activation=None, kernel_initializer=tf.glorot_normal_initializer, name=None):
     global _sparse_conv_naming_index
@@ -225,6 +212,14 @@ def create_active_edges(vertices_a, vertices_b, name,multiplier=1):
     print('create_active_edges: edges out ',name,edges.shape)
     return edges
 
+def sparse_conv_collapse(sparse_dict):
+    # This is how PEP8's E128 requires formatting to be done
+    # We would do well to adhere to best practices in our code
+    all_features, spatial_features_global, \
+    spatial_features_local, num_entries = \
+        sparse_dict['all_features'], sparse_dict['spatial_features_global'], \
+        sparse_dict['spatial_features_local'], sparse_dict['num_entries']
+    return tf.concat([spatial_features_global, all_features, spatial_features_local], axis=-1)
 
 def apply_edges(vertices, edges, reduce_sum=True, flatten=True,expand_first_vertex_dim=True, aggregation_function=tf.reduce_max):
     '''
@@ -243,7 +238,6 @@ def apply_edges(vertices, edges, reduce_sum=True, flatten=True,expand_first_vert
         out = aggregation_function(out,axis=2)
     if flatten:
         out = tf.reshape(out,shape=[out.shape[0],out.shape[1],-1])
-
     return out
 
 

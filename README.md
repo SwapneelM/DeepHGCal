@@ -48,7 +48,7 @@ ln -s $CONDA_PREFIX/lib/libstdc++.so.6.0.25 $CONDA_PREFIX/lib/libstdc++.so.6
 The experiments are usually conducted in three steps:
 1. Training
 2. Testing (dumping of inference result somewhere on disk)
-3. Plotting and anlysis
+3. Plotting and analysis
 
 ### Training
 
@@ -67,16 +67,23 @@ The experiments are usually conducted in three steps:
 python <path to train file> <path to config file> config_name
 ```
 
+### TrackingNTuples
+
+* If you only want to use the repository for training on particle tracks, based on [TrackingNtuples](https://github.com/SwapneelM/TrackingNTuples)
+* Refer to the [Instructions](/python/standalone-models/INSTRUCTIONS.md)
+```
+cd DeepHGCal/python
+python standalone-models/tntuples.py configs/Jan19cfg.ini tntuples
+```
+
 
 ### Testing
-
 ```
 python <path to train file> <path to config file> config_name --test True
 ```
 
 
 ### Plotting and analysis
-
 ```
 python bin/plot/plot_file.py <path to config file> config_name
 ```
