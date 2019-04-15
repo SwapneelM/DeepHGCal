@@ -1,4 +1,4 @@
-name: deepHGCal
+name: deephgcalenv
 channels:
   - nlesc
   - anaconda
