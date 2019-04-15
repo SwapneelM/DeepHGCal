@@ -1,4 +1,4 @@
-name: deepHGCal
+name: deephgcalenv
 channels:
   - nlesc
   - anaconda
@@ -67,5 +67,3 @@ dependencies:
   - xz=5.2.3=0
   - zlib=1.2.11=0
   - tensorflow-gpu=1.8.0
-prefix: /afs/cern.ch/work/s/smehta/miniconda3/envs/deephgcalenv
-

@@ -1,6 +1,16 @@
 DeepHGCal 
 =========
 
+**Note:** For the standalone version for particle track reconstruction (CMS Tracker), use the branch [tntuples](https://github.com/SwapneelM/DeepHGCal/tree/tntuples)
+Essentially, you only need the conda environment, config file, and `DeepHGCal/python/standalone-models/tntuples.py`
+
+```
+conda activate deephgcalenv
+python /path/to/tntuples.py /path/to/Jan19cfg.ini tntuples
+```
+
+If you would like to run other analyses for the CMS HGCal, follow the instructions given below.
+
 Based on the DeepJetCore framework (https://github.com/DL4Jets/DeepJetCore) [CMS-AN-17-126] for HGCal reconstruction purposes.
 
 The framework consists of two parts:
