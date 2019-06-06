@@ -6,7 +6,8 @@ Essentially, you only need the conda environment, config file, and `DeepHGCal/py
 
 ```
 conda activate deephgcalenv
-python /path/to/tntuples.py /path/to/Jan19cfg.ini tntuples
+cd DeepHGCal/python
+python standalone-models/tntuples.py configs/Jan19cfg.ini tntuples
 ```
 
 If you would like to run other analyses for the CMS HGCal, follow the instructions given below.
@@ -41,7 +42,6 @@ unlink $CONDA_PREFIX/lib/libstdc++.so.6
 ln -s $CONDA_PREFIX/lib/libstdc++.so.6.0.25 $CONDA_PREFIX/lib/libstdc++.so.6
 
 ```
-
 
 ## Usage
 
