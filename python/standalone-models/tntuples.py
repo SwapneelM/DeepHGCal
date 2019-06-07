@@ -37,8 +37,9 @@ class ModelBuilder:
         self.config = config
 
         # Add check for one_hot_labels - duplicated in TNTuplesClusteringTrainer
-        # For God only knows what reason...
-        # What was the point of reading in the config in the trainer if you re-read it here...
+        # For God/Developer only knows what reason...
+        # What was the point of reading in the config in the trainer if you re-read it here...?
+        # TODO: Refactor to remove Model Builder
         try:
             self.one_hot_labels = self.config['one_hot_labels']
             print("One-Hot Labels set to ", self.one_hot_labels)
@@ -367,7 +368,9 @@ class TNTuplesClusteringTrainer:
             pass
 
         self.model.initialize()
-        self.saver_sparse = tf.train.Saver(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.model.get_variable_scope()))
+        self.saver_sparse = tf.train.Saver(
+            tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, self.model.get_variable_scope())
+        )
 
     def clean_summary_dir(self):
         print("Cleaning summary dir")
@@ -442,7 +445,7 @@ class TNTuplesClusteringTrainer:
 
                 print("Input Train shape: ", inputs_train[0].shape)
 
-                learning_rate=1
+                learning_rate = 1
                 if hasattr(self.model, "learningrate_scheduler"):
                     learning_rate = self.model.learningrate_scheduler.get_lr(iteration_number)
                 else:
@@ -468,6 +471,7 @@ class TNTuplesClusteringTrainer:
 
                 if self.plot_after != -1:
                     if iteration_number % self.plot_after == 0:
+                        # TODO: Add code to automate plots for validation here
                         pass
 
                 if iteration_number % self.validate_after == 0:
@@ -511,7 +515,7 @@ class TNTuplesClusteringTrainer:
 
     def visualize(self):
         self.initialize_test()
-        print("Beginning to visualize network with parameters", get_num_parameters(self.model.get_variable_scope()))
+        print("Beginning to visualize network with ", get_num_parameters(self.model.get_variable_scope()), " parameters")
         placeholders = self. model.get_placeholders()
         graph_loss = self.model.get_losses()
         graph_output = self.model.get_compute_graphs()
@@ -536,7 +540,7 @@ class TNTuplesClusteringTrainer:
                 inputs_test = sess.run(list(inputs_feed))
                 print("Run")
 
-                if len(placeholders)==5:
+                if len(placeholders) == 5:
                     inputs_train_dict = {
                         placeholders[0]: inputs_test[0][:, :, self.spatial_features_indices],
                         placeholders[1]: inputs_test[0][:, :, self.spatial_features_local_indices],
@@ -544,37 +548,22 @@ class TNTuplesClusteringTrainer:
                         placeholders[3]: inputs_test[0][:, :, self.target_indices],
                         placeholders[4]: inputs_test[1],
                         self.model.is_train: False,
-                        self.model.learning_rate : 0
+                        self.model.learning_rate: 0
                     }
                 else:
-                    raise ValueError("Length of Placeholders is more than inputs_train_dict requires. \
-                    This might be due to old code.")
+                    raise NotImplementedError("Old code is being called. Placeholder size needs to be checked.")
 
-                eval_out = sess.run([graph_temp, graph_loss, graph_output]+layer_feats, feed_dict=inputs_train_dict)
-                layer_outs = eval_out[3:]
-                prediction = eval_out[2]
+                eval_out = sess.run([graph_temp, graph_loss, graph_output], feed_dict=inputs_train_dict)
+                # layer_outs = eval_out[3:]
 
-                if iteration_number*self.num_batch+self.num_batch >= 32:
-                    for x in range(32):
-                        event_number = (32+x) % self.num_batch
-                        print("Event number", event_number)
-                        seed_index = inputs_test[2][event_number, :]
-                        print(seed_index)
-                        spatial_features = inputs_test[0][event_number, :, :][:,self.spatial_features_indices]
-                        energy = inputs_test[0][event_number, :, :][:,0]
-                        gt = inputs_test[0][event_number, :, :][:,self.target_indices]
-                        predictionx = prediction[event_number]
-                        layer_outsx = [x[event_number] for x in layer_outs]
-                        if 'aggregators' in self.config_name:
-                            plots.plot_clustering_layer_wise_visualize_agg(spatial_features, energy, predictionx, gt, layer_outsx, self.config_name)
-                        else:
-                            plots.plot_clustering_layer_wise_visualize(spatial_features, energy, predictionx, gt, layer_outsx, self.config_name)
-                    sys.exit(0)
+                # Get the maximum of the predicted values of the tracks
+                # argmax will return the index of the track it is most likely to be associated with
+                prediction = tf.argmax(eval_out[2], axis=2)
+                original_label = tf.argmax(inputs_test[0][:, :, self.target_indices], axis=2)
 
+                set_trace()
 
                 # Put the condition here!
-
-
                 iteration_number += 1
 
             # Stop the threads
@@ -652,13 +641,13 @@ class TNTuplesClusteringTrainer:
 
 
 class lr_scheduler(object):
-    def __init__(self, lr_dict=[], lr=0.0001):
+    def __init__(self, lr_dict=[], lr=0.001):
 
         self.lr_dict = lr_dict
         self.lr = lr
         self.next_change = 0
 
-    def check_next(self,iteration):
+    def check_next(self, iteration):
 
         for i in range(len(self.lr_dict)):
             key = self.lr_dict[i][0]
@@ -684,8 +673,7 @@ class lr_scheduler(object):
         print(self.lr_dict)
 
 
-class SparseConvClusteringSpatialMinLoss2():
-
+class SparseConvClusteringSpatialMinLoss2:
     def __init__(self, n_space, n_space_local, n_others, n_target_dim, batch_size, max_entries, learning_rate=0.0001):
         self.weight_weights = []
         self.AdMat = None
@@ -707,7 +695,7 @@ class SparseConvClusteringSpatialMinLoss2():
         self.n_target_dim = n_target_dim
         self.batch_size = batch_size
         self.max_entries = max_entries
-        self.learning_rate = tf.placeholder(tf.float32,name='learning_rate')
+        self.learning_rate = tf.placeholder(tf.float32, name='learning_rate')
         self.start_learning_rate = learning_rate
         self.learningrate_scheduler = lr_scheduler(lr=learning_rate)
         self.use_seeds = False
@@ -770,7 +758,6 @@ class SparseConvClusteringSpatialMinLoss2():
         self._placeholder_other_features = tf.placeholder(dtype=tf.float32, shape=[self.batch_size, self.max_entries, self.n_other_features])
         self._placeholder_targets = tf.placeholder(dtype=tf.float32, shape=[self.batch_size, self.max_entries, self.n_target_dim])
         self._placeholder_num_entries = tf.placeholder(dtype=tf.int64, shape=[self.batch_size, 1])
-        # self._placeholder_seed_indices = tf.placeholder(dtype=tf.int64, shape=[self.batch_size, 2])
 
     def get_placeholders(self):
         return self._placeholder_space_features, self._placeholder_space_features_local, self._placeholder_other_features, \
@@ -792,11 +779,6 @@ class SparseConvClusteringSpatialMinLoss2():
         print('targets:', targets.shape)
 
         cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=prediction, labels=targets)
-
-        # prediction = tf.clip_by_value(prediction, 1e-5, 1 - 1e-5)
-        # single_xentr = - ((targets * tf.log(prediction)) + ((1 - targets) * tf.log(1 - prediction)))
-        # print('single_xentr:', single_xentr.shape)
-
         return tf.reduce_mean(cross_entropy_loss)
 
     def _get_loss(self):
@@ -840,7 +822,7 @@ class SparseConvClusteringSpatialMinLoss2():
         feat = tf.layers.batch_normalization(feat, training=self.is_train, momentum=self.momentum)
         feat = high_dim_dense(feat, 32, activation=tf.nn.tanh)
         feat_list = []
-        # self.temp_feat_visualize = []
+        self.temp_feat_visualize = []
         for i in range(len(filters)):
             feat, _ = sparse_conv_hidden_aggregators(feat,
                                                      aggregators[i],
@@ -849,7 +831,7 @@ class SparseConvClusteringSpatialMinLoss2():
                                                      n_propagate=propagate[i],
                                                      plus_mean=plusmean
                                                      )
-            # self.temp_feat_visualize.append(xxx)
+            self.temp_feat_visualize.append(_)
             feat = tf.layers.batch_normalization(feat, training=self.is_train, momentum=self.momentum)
             feat_list.append(feat)
             # feat = tf.layers.dropout(feat, rate=0.0005, training=self.is_train)
@@ -960,5 +942,7 @@ trainer = TNTuplesClusteringTrainer(args.input, args.config)
 # Test and train are the only necessary options
 if args.test:
     trainer.test()
+elif args.visualize:
+    trainer.visualize()
 else:
     trainer.train()
