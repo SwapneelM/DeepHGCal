@@ -1,6 +1,17 @@
 DeepHGCal 
 =========
 
+**Note:** For the standalone version for particle track reconstruction (CMS Tracker), use the branch [tntuples](https://github.com/SwapneelM/DeepHGCal/tree/tntuples)
+Essentially, you only need the conda environment, config file, and `DeepHGCal/python/standalone-models/tntuples.py`
+
+```
+conda activate deephgcalenv
+cd DeepHGCal/python
+python standalone-models/tntuples.py configs/Jan19cfg.ini tntuples
+```
+
+If you would like to run other analyses for the CMS HGCal, follow the instructions given below.
+
 Based on the DeepJetCore framework (https://github.com/DL4Jets/DeepJetCore) [CMS-AN-17-126] for HGCal reconstruction purposes.
 
 The framework consists of two parts:
@@ -32,7 +43,6 @@ unlink $CONDA_PREFIX/lib/libstdc++.so.6
 ln -s $CONDA_PREFIX/lib/libstdc++.so.6.0.25 $CONDA_PREFIX/lib/libstdc++.so.6
 ```
 
-
 ## Usage
 
 The experiments are usually conducted in three steps:
@@ -61,7 +71,7 @@ python <path to train file> <path to config file> config_name
 ### TrackingNTuples
 
 * If you only want to use the repository for training on particle tracks, based on [TrackingNtuples](https://github.com/SwapneelM/TrackingNTuples)
-
+* Refer to the [Instructions](/python/standalone-models/INSTRUCTIONS.md)
 ```
 git clone https://github.com/SwapneelM/DeepHGCal
 cd DeepHGCal 
@@ -74,14 +84,12 @@ python standalone-models/tntuples.py configs/Jan19cfg.ini tntuples
 
 
 ### Testing
-
 ```
 python <path to train file> <path to config file> config_name --test True
 ```
 
 
 ### Plotting and analysis
-
 ```
 python bin/plot/plot_file.py <path to config file> config_name
 ```
