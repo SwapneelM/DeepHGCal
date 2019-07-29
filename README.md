@@ -2,8 +2,7 @@ DeepHGCal
 =========
 
 **Note:** For the standalone version for particle track reconstruction (CMS Tracker), use the branch [tntuples](https://github.com/SwapneelM/DeepHGCal/tree/tntuples)
-Essentially, you only need the conda environment, config file, and `DeepHGCal/python/standalone-models/tntuples.py`
-
+For this, you only need the conda environment, [config file](DeepHGCal/python/configs/Jan19cfg.ini), and [the extracted model](DeepHGCal/python/standalone-models/tntuples.py)
 ```
 conda activate deephgcalenv
 cd DeepHGCal/python
